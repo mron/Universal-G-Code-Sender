@@ -2,7 +2,7 @@ package com.willwinder.universalgcodesender;
 
 import static com.willwinder.universalgcodesender.AbstractCommunicator.SerialCommunicatorEvent.COMMAND_SENT;
 
-import java.util.StringTokenizer;
+//import java.util.StringTokenizer;
 import java.util.logging.Logger;
 
 import com.willwinder.universalgcodesender.types.GcodeCommand;

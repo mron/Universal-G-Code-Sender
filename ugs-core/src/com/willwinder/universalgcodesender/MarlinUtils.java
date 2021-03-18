@@ -92,7 +92,6 @@ public class MarlinUtils {
 			Position pos = new Position(xpos, ypos, zpos, Units.MM);
 			return new ControllerStatus( cs, pos, pos, fr);
 		}
-
 		return lastStatus;
 	}
 

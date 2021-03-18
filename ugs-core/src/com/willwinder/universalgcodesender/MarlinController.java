@@ -251,7 +251,7 @@ public class MarlinController extends AbstractController {
 				// positionPollTimer = createPositionPollTimer();
 				// this.beginPollingPosition();
 			} else if (response.contains("S_XYZ")) {
-				final Pattern splitterPattern = Pattern.compile("^S_XYZ:([^ ])" );
+				final Pattern splitterPattern = Pattern.compile(".*S_XYZ:([^ ])" );
 				Matcher matcher = splitterPattern.matcher(response);
 				if (matcher.find()) {
 					Integer s = Integer.parseInt( matcher.group(1) ); //Status
@@ -354,7 +354,7 @@ public class MarlinController extends AbstractController {
 								if (outstandingPolls >= 20) {
 									outstandingPolls = 0;
 								}
-								
+
 							}
 						} catch (Exception ex) {
 							dispatchConsoleMessage(MessageType.INFO, Localization.getString("controller.exception.sendingstatus")
