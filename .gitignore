@@ -14,6 +14,8 @@ tar.gz
 .project
 .settings
 /*.log
+/*.dat
+.vscode/*
 /UGSPlatform/build/
 /UGSPlatform/CentralLookup/build/
 /UGSPlatform/CentralLookup/nbproject/private/
@@ -50,3 +52,6 @@ dependency-reduced-pom.xml
 ugs-pendant/src/main/webapp/node/node_modules
 ugs-pendant/src/main/webapp/node
 /ugs-platform/ugs-platform-plugin-cloud-storage/nbproject/
+localeVariants
+lastModified/all-checksum.txt
+.vscode/launch.json
