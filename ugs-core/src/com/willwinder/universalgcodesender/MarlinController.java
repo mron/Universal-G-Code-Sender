@@ -4,7 +4,6 @@ import static com.willwinder.universalgcodesender.model.UnitUtils.Units.MM;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -44,6 +43,10 @@ public class MarlinController extends AbstractController {
 
 	private MarlinCommunicator marlinComm;
 	private boolean isResuming = false;
+	private String marlinVersion = "UNKNOWN";
+	private boolean marlinVersionSeen = false;
+
+	private int nonScriptedCommandsSent = 0;
 
 	public MarlinController() {
 		this(new MarlinCommunicator());
@@ -51,6 +54,7 @@ public class MarlinController extends AbstractController {
 
 	protected MarlinController(MarlinCommunicator comm) {
 		super(comm);
+		resetVersion();
 		this.marlinComm = comm;
 
 		this.commandCreator = new GcodeCommandCreator();
@@ -58,6 +62,9 @@ public class MarlinController extends AbstractController {
 
 		this.positionPollTimer = createPositionPollTimer();
 		this.setSingleStepMode(true);
+
+		capabilities.addCapability(CapabilitiesConstants.JOGGING);
+		capabilities.addCapability(CapabilitiesConstants.RETURN_TO_ZERO);
 	}
 
 	@Override
@@ -74,8 +81,7 @@ public class MarlinController extends AbstractController {
 
 	@Override
 	public Capabilities getCapabilities() {
-		// TODO Auto-generated method stub
-		return null;
+		return capabilities;
 	}
 
 	@Override
@@ -85,8 +91,10 @@ public class MarlinController extends AbstractController {
 
 	@Override
 	public String getFirmwareVersion() {
-		// TODO Auto-generated method stub
-		return null;
+		if (this.isCommOpen()) {
+			return marlinVersion;
+		}
+		return "<" + Localization.getString("controller.log.notconnected") + ">";
 	}
 
 	@Override
@@ -102,8 +110,7 @@ public class MarlinController extends AbstractController {
 
 	@Override
 	protected void closeCommBeforeEvent() {
-		// TODO Auto-generated method stub
-
+		resetVersion();
 	}
 
 	@Override
@@ -129,6 +136,9 @@ public class MarlinController extends AbstractController {
 		logger.info("trying to send M0");
 		GcodeCommand command = createCommand("M0");
 		sendCommandImmediately(command);
+
+		// adjust the sent counter
+		nonScriptedCommandsSent++;
 	}
 
 	@Override
@@ -138,10 +148,14 @@ public class MarlinController extends AbstractController {
 		// sendCommandImmediately(command);
 		this.marlinComm.sendRealtimeCommand(command);
 
+		// adjust the sent counter
+		nonScriptedCommandsSent++;
+
 		synchronized (this) {
 			// need to resume otherwise the cmd will never go
 			isResuming = true;
 			comm.resumeSend();
+			dispatchStateChange(ControlState.COMM_SENDING);
 		}
 	}
 
@@ -163,10 +177,28 @@ public class MarlinController extends AbstractController {
 		try {
 			boolean verbose = false;
 
+			if (!marlinVersionSeen) {
+				if (!checkForVersionString(response)) {
+					if (response.startsWith("echo:")) {
+						String respbody = response.substring(5);
+						checkForVersionString(respbody);						
+					}
+				}				
+			}
+			
 			if (MarlinUtils.isOkResponse(response)) {
-				this.commandComplete(processed);
-				logger.info("active count after rx: " + marlinComm.activeCommandListSize());
-				updateControllerState("Idle", ControllerState.IDLE);
+				if (this.getActiveCommand().isPresent()) {
+					this.commandComplete(processed);
+					logger.info("active count after rx: " + marlinComm.activeCommandListSize());
+				} else {
+					logger.info("received OK with no active commands... possibly pause or resume msg?");
+				}
+				// if (this.getActiveCommand().isPresent() || rowsRemaining() > 0) {
+				if (this.getActiveCommand().isPresent() || (isStreaming() && rowsRemaining() > 0)) {
+					updateControllerState("Run", ControllerState.RUN);
+				} else {
+					updateControllerState("Idle", ControllerState.IDLE);
+				}
 				marlinComm.setMarlinBusy(false);
 				isResuming = false;
 			} else if (MarlinUtils.isPausedResponse(response)) {
@@ -175,6 +207,7 @@ public class MarlinController extends AbstractController {
 				synchronized (this) {
 					if (!isResuming) {
 						comm.pauseSend();
+						dispatchStateChange(ControlState.COMM_SENDING_PAUSED);
 					}
 				}
 				// dont stop sending, need to be able to resume with M108
@@ -232,6 +265,14 @@ public class MarlinController extends AbstractController {
 			this.dispatchConsoleMessage(MessageType.ERROR, message + "\n");
 		}
 
+	}
+
+	private boolean checkForVersionString(String respbody) {
+		if (respbody.startsWith("Marlin")) {
+			marlinVersion = respbody;
+			marlinVersionSeen = true;
+		}
+		return marlinVersionSeen;
 	}
 
 	private void updateControllerState(String str, ControllerState state) {
@@ -298,6 +339,11 @@ public class MarlinController extends AbstractController {
 							if (outstandingPolls == 0) {
 								outstandingPolls++;
 								sendCommandImmediately(createCommand("M114"));
+								// for debugging M114 - stop the timer so only one is sent
+								// positionPollTimer.stop();
+
+								// adjust the sent counter
+								nonScriptedCommandsSent++;
 							} else {
 								// If a poll is somehow lost after 20 intervals,
 								// reset for sending another.
@@ -363,14 +409,18 @@ public class MarlinController extends AbstractController {
 
 	@Override
 	protected void statusUpdatesEnabledValueChanged() {
-		// TODO Auto-generated method stub
-
+		if (getStatusUpdatesEnabled()) {
+			positionPollTimer.stop();
+			positionPollTimer.start();
+		} else {
+			positionPollTimer.stop();
+		}
 	}
 
 	@Override
 	protected void statusUpdatesRateValueChanged() {
-		// TODO Auto-generated method stub
-
+		positionPollTimer.stop();
+		positionPollTimer.start();
 	}
 
 	@Override
@@ -410,4 +460,58 @@ public class MarlinController extends AbstractController {
 		}
 	}
 
+	@Override
+	protected void openCommAfterEvent() throws Exception {
+		super.openCommAfterEvent();
+		resetVersion();
+	}
+
+	private void resetVersion() {
+		marlinVersionSeen = false;
+		marlinVersion = "UNKNOWN";
+	}
+
+	/* 
+	 * the following overrides adjust the count of g code lines
+	 * otherwise commands like M108 and M114 are counted and skew the numbers
+	 */
+	@Override
+	public int rowsCompleted() {
+		int rc = super.rowsCompleted();
+		int ans = rc - nonScriptedCommandsSent;
+		logger.finer("rowsCompleted was " + rc + " adjusted =>" + ans);
+		return ans;
+	}
+
+	@Override
+	public int rowsRemaining() {
+		int rr = super.rowsRemaining();
+		int ans = rr + nonScriptedCommandsSent;
+		logger.finer("rowsRemaining was " + rr + " adjusted =>" + ans);
+		return ans;
+	}
+
+	@Override
+	public int rowsSent() {
+		int rs = super.rowsSent();
+		int ans = rs - nonScriptedCommandsSent;
+		logger.finer("rowsSent was " + rs + " adjusted =>" + ans);
+		return ans;
+	}
+
+	@Override
+	public void beginStreaming() throws Exception {
+		// TODO Auto-generated method stub
+		super.beginStreaming();
+		nonScriptedCommandsSent = 0;
+	}
+
+	// this is just to add a debug trace
+	@Override
+	public Boolean isPaused() {
+		Boolean b = super.isPaused();
+		logger.fine("isPaused =>" + b.toString());
+		return b;
+	}
+	
 }
