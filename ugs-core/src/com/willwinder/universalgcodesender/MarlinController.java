@@ -71,6 +71,7 @@ public class MarlinController extends AbstractController {
 
 		capabilities.addCapability(CapabilitiesConstants.JOGGING);
 		capabilities.addCapability(CapabilitiesConstants.RETURN_TO_ZERO);
+		capabilities.addCapability(GrblCapabilitiesConstants.REAL_TIME);
 	}
 	// Try overriding port open and close
 	// This is stolen from the Abstract Class.
@@ -123,10 +124,6 @@ public class MarlinController extends AbstractController {
 
 	@Override
 	public Capabilities getCapabilities() {
-<<<<<<< HEAD
-		// TODO Auto-generated method stub
-=======
->>>>>>> 9fa5f634674fdc631f08632e67ff31049f4dd966
 		return capabilities;
 	}
 
@@ -179,24 +176,51 @@ public class MarlinController extends AbstractController {
 
 	@Override
 	protected void pauseStreamingEvent() throws Exception {
-		logger.info("trying to send M0");
-		GcodeCommand command = createCommand("M0");
-		sendCommandImmediately(command);
+	
+		if ( this.capabilities.hasCapability(GrblCapabilitiesConstants.REAL_TIME)) {
+			logger.info("trying to '!'");
+            this.comm.sendByteImmediately(MarlinUtils.GRBL_PAUSE_COMMAND);
+			//nonScriptedCommandsSent++;
+        } else {
+			logger.info("trying to send M0");
+			GcodeCommand command = createCommand("M0");
+			sendCommandImmediately(command);
+			// adjust the sent counter
+			nonScriptedCommandsSent++;
+		}
+	}
+	protected void sendStatus() throws Exception {
+		if ( this.capabilities.hasCapability(GrblCapabilitiesConstants.REAL_TIME)) {
+			logger.info("trying to '?'");
+            this.comm.sendByteImmediately(MarlinUtils.GRBL_STATUS_COMMAND );
+			//nonScriptedCommandsSent++;
+        } else {
+			logger.info("trying to send ? as command");
+			GcodeCommand command = createCommand("?");
+			// sendCommandImmediately(command);
+			this.marlinComm.sendRealtimeCommand(command);
 
-		// adjust the sent counter
-		nonScriptedCommandsSent++;
+			// adjust the sent counter
+			nonScriptedCommandsSent++;
+		}
 	}
 
 	@Override
 	protected void resumeStreamingEvent() throws Exception {
-		logger.info("trying to send M108");
-		GcodeCommand command = createCommand("M108");
-		// sendCommandImmediately(command);
-		this.marlinComm.sendRealtimeCommand(command);
 
-		// adjust the sent counter
-		nonScriptedCommandsSent++;
+		if ( this.capabilities.hasCapability(GrblCapabilitiesConstants.REAL_TIME)) {
+			logger.info("trying to '~'");
+            this.comm.sendByteImmediately(MarlinUtils.GRBL_RESUME_COMMAND );
+			//nonScriptedCommandsSent++;
+        } else {
+			logger.info("trying to send M108");
+			GcodeCommand command = createCommand("M108");
+			// sendCommandImmediately(command);
+			this.marlinComm.sendRealtimeCommand(command);
 
+			// adjust the sent counter
+			nonScriptedCommandsSent++;
+		}
 		synchronized (this) {
 			// need to resume otherwise the cmd will never go
 			isResuming = true;
@@ -233,24 +257,9 @@ public class MarlinController extends AbstractController {
 			}
 			
 			if (MarlinUtils.isOkResponse(response)) {
-<<<<<<< HEAD
 				this.commandComplete(processed);
 				logger.info("active count after rx: " + marlinComm.activeCommandListSize());
 				// updateControllerState("Idle", ControllerState.IDLE);
-=======
-				if (this.getActiveCommand().isPresent()) {
-					this.commandComplete(processed);
-					logger.info("active count after rx: " + marlinComm.activeCommandListSize());
-				} else {
-					logger.info("received OK with no active commands... possibly pause or resume msg?");
-				}
-				// if (this.getActiveCommand().isPresent() || rowsRemaining() > 0) {
-				if (this.getActiveCommand().isPresent() || (isStreaming() && rowsRemaining() > 0)) {
-					updateControllerState("Run", ControllerState.RUN);
-				} else {
-					updateControllerState("Idle", ControllerState.IDLE);
-				}
->>>>>>> 9fa5f634674fdc631f08632e67ff31049f4dd966
 				marlinComm.setMarlinBusy(false);
 				isResuming = false;
 			} else if (MarlinUtils.isPausedResponse(response)) {
@@ -396,17 +405,7 @@ public class MarlinController extends AbstractController {
 						try {
 							if (outstandingPolls == 0) {
 								outstandingPolls++;
-<<<<<<< HEAD
-								sendCommandImmediately(createCommand("?"));
-								//dispatchConsoleMessage(MessageType.INFO, Localization.getString("controller.sendingstatus\n"));
-=======
-								sendCommandImmediately(createCommand("M114"));
-								// for debugging M114 - stop the timer so only one is sent
-								// positionPollTimer.stop();
-
-								// adjust the sent counter
-								nonScriptedCommandsSent++;
->>>>>>> 9fa5f634674fdc631f08632e67ff31049f4dd966
+								sendStatus();
 							} else {
 								// If a poll is somehow lost after 20 intervals,
 								// reset for sending another.

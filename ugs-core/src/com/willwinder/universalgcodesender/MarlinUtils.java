@@ -20,6 +20,11 @@ public class MarlinUtils {
 		return StringUtils.equalsIgnoreCase(response, "ok");
 	}
 
+	// Real time
+	public static final byte GRBL_PAUSE_COMMAND = '!';
+	public static final byte GRBL_RESUME_COMMAND = '~';
+	public static final byte GRBL_STATUS_COMMAND = '?';
+	
 	/**
 	 * Check if a string contains a Marlin position string.
 	 */
@@ -125,4 +130,33 @@ public class MarlinUtils {
 		return MarlinUtils.GCODE_SET_COORDINATE + " " + coordsString;
 	}
 
+    /**
+     * Determines version of GRBL position capability.
+     */
+    protected static Capabilities getMarlinStatusCapabilities() {
+        Capabilities ret = new Capabilities();
+        // ret.addCapability(CapabilitiesConstants.JOGGING);
+        // ret.addCapability(CapabilitiesConstants.CHECK_MODE);
+        // ret.addCapability(CapabilitiesConstants.FIRMWARE_SETTINGS);
+        // ret.addCapability(CapabilitiesConstants.RETURN_TO_ZERO);
+        // ret.addCapability(CapabilitiesConstants.X_AXIS);
+        // ret.addCapability(CapabilitiesConstants.Y_AXIS);
+        // ret.addCapability(CapabilitiesConstants.Z_AXIS);
+
+		// ret.addCapability(CapabilitiesConstants.HOMING);
+		// ret.addCapability(CapabilitiesConstants.HARD_LIMITS);
+
+		ret.addCapability(GrblCapabilitiesConstants.REAL_TIME);
+
+		// ret.addCapability(GrblCapabilitiesConstants.REAL_TIME);
+		// ret.addCapability(CapabilitiesConstants.SOFT_LIMITS);
+		// ret.addCapability(CapabilitiesConstants.SETUP_WIZARD);
+
+
+		// ret.addCapability(GrblCapabilitiesConstants.V1_FORMAT);
+		// ret.addCapability(GrblCapabilitiesConstants.HARDWARE_JOGGING);
+		// ret.addCapability(CapabilitiesConstants.OVERRIDES);
+		// ret.addCapability(CapabilitiesConstants.CONTINUOUS_JOGGING);
+        return ret;
+    }
 }
