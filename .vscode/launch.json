@@ -9,7 +9,8 @@
             "name": "Launch MainWindow",
             "request": "launch",
             "mainClass": "com.willwinder.universalgcodesender.MainWindow",
-            "projectName": "ugs-classic"
+            "projectName": "ugs-classic",
+            "console": "internalConsole"
         },
         {
             "type": "java",

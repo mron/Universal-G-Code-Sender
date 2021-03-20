@@ -305,9 +305,9 @@ public class MarlinController extends AbstractController {
 			} else if (response.contains("S_XYZ")) {
 				final Pattern splitterPattern = Pattern.compile(".*S_XYZ:([^ ])" );
 				Matcher matcher = splitterPattern.matcher(response);
-				if (matcher.find()) {
-					Integer s = Integer.parseInt( matcher.group(1) ); //Status
-				}
+				// if (matcher.find()) {
+				// 	Integer s = Integer.parseInt( matcher.group(1) ); //Status
+				// }
 			} else if (MarlinUtils.isMarlinEchoMessage(response)) {
 				// processed = response;
 			}
@@ -572,9 +572,11 @@ public class MarlinController extends AbstractController {
 	// this is just to add a debug trace
 	@Override
 	public Boolean isPaused() {
-		Boolean b = super.isPaused();
+		Boolean b = super.isPaused() || isHolding() ;
 		logger.fine("isPaused =>" + b.toString());
 		return b;
 	}
-	
+	public Boolean isHolding() {
+		return controllerStatus.getState() == ControllerState.HOLD ;
+	}
 }
