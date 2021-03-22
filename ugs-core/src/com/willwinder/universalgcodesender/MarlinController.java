@@ -174,24 +174,19 @@ public class MarlinController extends AbstractController {
 
 	}
 
+	// @Override
+	// protected void pauseResume() throws Exception {
+	// 		logger.info("trying ----------  PAUSE ----------  RESUME EVENT ");
+	// }
+
 	@Override
 	protected void pauseStreamingEvent() throws Exception {
-	
-		if ( this.capabilities.hasCapability(GrblCapabilitiesConstants.REAL_TIME)) {
-			logger.info("trying to '!'");
-            this.comm.sendByteImmediately(MarlinUtils.GRBL_PAUSE_COMMAND);
-			//nonScriptedCommandsSent++;
-        } else {
-			logger.info("trying to send M0");
-			GcodeCommand command = createCommand("M0");
-			sendCommandImmediately(command);
-			// adjust the sent counter
-			nonScriptedCommandsSent++;
-		}
+			logger.info("trying ----------  PAUSE EVENT ");
 	}
+
 	protected void sendStatus() throws Exception {
 		if ( this.capabilities.hasCapability(GrblCapabilitiesConstants.REAL_TIME)) {
-			logger.info("trying to '?'");
+			//logger.info("trying to '?'");
             this.comm.sendByteImmediately(MarlinUtils.GRBL_STATUS_COMMAND );
 			//nonScriptedCommandsSent++;
         } else {
@@ -207,38 +202,19 @@ public class MarlinController extends AbstractController {
 
 	@Override
 	protected void resumeStreamingEvent() throws Exception {
-
-		if ( this.capabilities.hasCapability(GrblCapabilitiesConstants.REAL_TIME)) {
-			logger.info("trying to '~'");
-            this.comm.sendByteImmediately(MarlinUtils.GRBL_RESUME_COMMAND );
-			//nonScriptedCommandsSent++;
-        } else {
-			logger.info("trying to send M108");
-			GcodeCommand command = createCommand("M108");
-			// sendCommandImmediately(command);
-			this.marlinComm.sendRealtimeCommand(command);
-
-			// adjust the sent counter
-			nonScriptedCommandsSent++;
-		}
-		synchronized (this) {
-			// need to resume otherwise the cmd will never go
-			isResuming = true;
-			comm.resumeSend();
-			dispatchStateChange(ControlState.COMM_SENDING);
-		}
+		logger.info("trying --- resume");
 	}
 
 	@Override
 	protected void isReadyToSendCommandsEvent() throws Exception {
 		// TODO Auto-generated method stub
-
+		logger.info("-------- ----- ------------------Just about to send command");
 	}
 
 	@Override
 	protected void isReadyToStreamCommandsEvent() throws Exception {
 		// TODO Auto-generated method stub
-
+		logger.info("-------- ----- Just about to stream command");
 	}
 
 	@Override
@@ -255,7 +231,7 @@ public class MarlinController extends AbstractController {
 					}
 				}				
 			}
-			
+	
 			if (MarlinUtils.isOkResponse(response)) {
 				this.commandComplete(processed);
 				logger.info("active count after rx: " + marlinComm.activeCommandListSize());
@@ -268,7 +244,7 @@ public class MarlinController extends AbstractController {
 				synchronized (this) {
 					if (!isResuming) {
 						comm.pauseSend();
-						dispatchStateChange(ControlState.COMM_SENDING_PAUSED);
+						setCurrentState(ControlState.COMM_SENDING_PAUSED);
 					}
 				}
 				// dont stop sending, need to be able to resume with M108
@@ -289,25 +265,10 @@ public class MarlinController extends AbstractController {
 						controllerStatus, response, capabilities, getFirmwareSettings().getReportingUnits());
 
 				dispatchStatusString(controllerStatus);
+				setCurrentState( getControlState() ) ;
+				logger.log(Level.INFO, "-----control state "+getControlState()  + "\n");
 
 				this.checkStreamFinished();
-			} else if (response.contains("Free Memory:")) {
-				// updateControllerState("Idle", ControllerState.IDLE);
-				// // this.isReady = true;
-				// /*
-				//  * resetBuffers();
-				//  *
-				//  *
-				//  */
-				// this.stopPollingPosition();
-				// positionPollTimer = createPositionPollTimer();
-				// this.beginPollingPosition();
-			} else if (response.contains("S_XYZ")) {
-				final Pattern splitterPattern = Pattern.compile(".*S_XYZ:([^ ])" );
-				Matcher matcher = splitterPattern.matcher(response);
-				// if (matcher.find()) {
-				// 	Integer s = Integer.parseInt( matcher.group(1) ); //Status
-				// }
 			} else if (MarlinUtils.isMarlinEchoMessage(response)) {
 				// processed = response;
 			}
@@ -450,11 +411,11 @@ public class MarlinController extends AbstractController {
         case DOOR:
             return ControlState.COMM_SENDING_PAUSED;
 		case IDLE:
-			if (isStreaming()) {
-				return ControlState.COMM_SENDING_PAUSED;
-			} else {
-				return ControlState.COMM_IDLE;
-			}
+			// if (isStreaming()) {
+			// 	return ControlState.COMM_SENDING_PAUSED;
+			// } else {
+			// 	return ControlState.COMM_IDLE;
+			// }
 			/*
 			 * case "alarm": return ControlState.COMM_IDLE; case "check": if (isStreaming() && comm.isPaused()) { return ControlState.COMM_SENDING_PAUSED; }
 			 * else if (isStreaming() && !comm.isPaused()) { return ControlState.COMM_SENDING; } else { return COMM_CHECK; }
@@ -569,14 +530,73 @@ public class MarlinController extends AbstractController {
 		nonScriptedCommandsSent = 0;
 	}
 
-	// this is just to add a debug trace
 	@Override
 	public Boolean isPaused() {
-		Boolean b = super.isPaused() || isHolding() ;
+		Boolean b = super.isPaused() || controllerStatus.getState() == ControllerState.HOLD ;
 		logger.fine("isPaused =>" + b.toString());
 		return b;
 	}
-	public Boolean isHolding() {
-		return controllerStatus.getState() == ControllerState.HOLD ;
+
+	@Override
+	public void resumeStreaming() throws Exception {
+		try{
+			if ( this.capabilities.hasCapability(GrblCapabilitiesConstants.REAL_TIME)) {
+				logger.info("trying to '~'");
+				this.comm.sendByteImmediately(MarlinUtils.GRBL_RESUME_COMMAND );
+				//nonScriptedCommandsSent++;
+			} else {
+				logger.info("trying to send M108");
+				GcodeCommand command = createCommand("M108");
+				// sendCommandImmediately(command);
+				this.marlinComm.sendRealtimeCommand(command);
+
+				// adjust the sent counter
+				nonScriptedCommandsSent++;
+			}
+			super.resumeStreaming();
+			setCurrentState(ControlState.COMM_SENDING);
+
+		} catch ( Exception ex ){
+			logger.info("FAILED ------- RESUME: "+ ex.getMessage());
+		}
+
+		// synchronized (this) {
+		// 	// need to resume otherwise the cmd will never go
+		// 	isResuming = true;
+		// 	comm.resumeSend();
+		// 	dispatchStateChange(ControlState.COMM_SENDING);
+		// }
 	}
+
+	@Override
+	public void pauseStreaming() {
+		try {
+			if (this.isCommOpen()) {
+				if ( this.capabilities.hasCapability(GrblCapabilitiesConstants.REAL_TIME)) {
+					logger.info("-----trying to '!'");
+					this.comm.sendByteImmediately(MarlinUtils.GRBL_PAUSE_COMMAND );
+					//nonScriptedCommandsSent++;
+				} else {
+					logger.info("-----trying to send M0");
+					//super.pauseStreaming();
+					GcodeCommand command = createCommand("M0");
+					sendCommandImmediately(command);
+					// adjust the sent counter
+					nonScriptedCommandsSent++;
+				}
+				super.pauseStreaming();
+			}
+		} catch ( Exception ex ) {
+			logger.info("FAILED ------- pauseStreaming");
+		}
+    }
+
+	@Override
+	public void feedhold() {
+		try {
+			pauseStreaming();
+		} catch ( Exception ex ) {
+			logger.info("FAILED ------- feedhold");
+		}
+    }
 }

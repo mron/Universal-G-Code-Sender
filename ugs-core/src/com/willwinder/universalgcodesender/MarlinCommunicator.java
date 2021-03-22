@@ -50,12 +50,18 @@ public class MarlinCommunicator extends BufferedCommunicator {
 		return 200; // TODO: what should it be?
 	}
 
+	Boolean pausePending = false ;
+	public void setPausePending() {
+		pausePending = true;
+	}
+
 	@Override
 	protected void sendingCommand(String command) {
 		logger.info("send: " + command);
 		logger.info("active count after send: " + this.activeCommandListSize());
 
-		if ("M0".equals(command)) {
+		if ("M0".equals(command) || pausePending ) {
+			pausePending = false;
 			this.pauseSend(); // we haven't sent yet but we have checked the pause flag already
 		}
 	}
