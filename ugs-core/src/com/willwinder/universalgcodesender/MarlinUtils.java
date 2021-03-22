@@ -115,7 +115,8 @@ public class MarlinUtils {
 	}
 
 	public static boolean isPausedResponse(String response) {
-		return StringUtils.startsWith(response, "echo:busy: paused for user");
+		//return StringUtils.contains(response, "echo:busy: paused for user");
+		return StringUtils.contains(response, "S_XYZ:6");
 	}
 
 	/**
