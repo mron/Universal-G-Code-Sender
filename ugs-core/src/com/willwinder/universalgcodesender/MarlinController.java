@@ -265,13 +265,16 @@ public class MarlinController extends AbstractController {
 		
 				controllerStatus = MarlinUtils.getStatusFromStatusString(
 						controllerStatus, response, capabilities, getFirmwareSettings().getReportingUnits());
+					
+				dispatchStatusString(controllerStatus);
+				setCurrentState( getControlState() ) ;	
 
 				// Make UGS more responsive to the state being reported by GRBL.
-				if (before != getControlState()) {
-					dispatchStatusString(controllerStatus);
-					setCurrentState( getControlState() ) ;	
-					//this.dispatchStateChange(getControlState());
-				}
+				// if (before != getControlState()) {
+				// 	dispatchStatusString(controllerStatus);
+				// 	setCurrentState( getControlState() ) ;	
+				// 	//this.dispatchStateChange(getControlState());
+				// }
 		
 				logger.log(Level.INFO, "-----control state "+getControlState()  + "\n");
 
