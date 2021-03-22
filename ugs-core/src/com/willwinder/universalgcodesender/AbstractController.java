@@ -197,12 +197,6 @@ public abstract class AbstractController implements CommunicatorListener, IContr
     }
 
     @Override
-    public void feedhold() {
-        //Does nothing in most cases
-        throw new Exception("controller.exception.feedhold"));
-    }
-
-    @Override
     public void setWorkPosition(PartialPosition axisPosition) throws Exception {
         throw new Exception(Localization.getString("controller.exception.setworkpos"));
     }
