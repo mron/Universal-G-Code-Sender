@@ -279,7 +279,7 @@ public class MarlinControllerTest {
 		assertEquals("M0", mgc.queuedStrings.get(0));
 
 		assertFalse(instance.isPaused());
-		instance.rawResponseHandler("echo:busy: paused for user");
+		instance.rawResponseHandler("ok");
 		assertTrue(instance.isPaused());
 	}
 
@@ -311,7 +311,7 @@ public class MarlinControllerTest {
 		MarlinController instance = new MarlinController(mgc);
 		instance.openCommPort(getSettings().getConnectionDriver(), "blah", 1234);
 
-		instance.rawResponseHandler("echo:busy: paused for user");
+		instance.rawResponseHandler("ok");
 		assertTrue(instance.isPaused());
 		instance.resumeStreaming();
 		assertEquals(2, mgc.numResumeSendCalls); // MarlinController calls it twice to cope with some corner cases
