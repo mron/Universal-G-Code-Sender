@@ -597,13 +597,4 @@ public class MarlinController extends AbstractController {
 			logger.info("FAILED ------- pauseStreaming");
 		}
     }
-
-	@Override
-	public void feedhold() {
-		try {
-			pauseStreaming();
-		} catch ( Exception ex ) {
-			logger.info("FAILED ------- feedhold");
-		}
-    }
 }
