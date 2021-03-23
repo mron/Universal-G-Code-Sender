@@ -53,8 +53,8 @@ public class MarlinUtils {
 			ControllerStatus lastStatus, final String status,
 			final Capabilities version, Units reportingUnits) {
 			// final Pattern splitterPattern = Pattern.compile("^X\\:([^ ]+) Y\\:([^ ]+) Z\\:([^ ]+) E");
-			final Pattern splitterPattern = Pattern.compile("^<<X:([^ ]+) Y:([^ ]+) Z:([^ ]+) E:[^ ]+ F:([^ ]+) S_XYZ:([^ ])>>" );
-			//final Pattern splitterPattern = Pattern.compile("^<<X:([^ ]+) Y:([^ ]+) Z:([^ ]+) NX:([^ ]+) NY:([^ ]+) NZ:([^ ]+) E:[^ ]+ F:([^ ]+) S_XYZ:([^ ])>>" );
+			//final Pattern splitterPattern = Pattern.compile("^<<X:([^ ]+) Y:([^ ]+) Z:([^ ]+) E:[^ ]+ F:([^ ]+) S_XYZ:([^ ])>>" );
+			final Pattern splitterPattern = Pattern.compile("^<<X:([^ ]+) Y:([^ ]+) Z:([^ ]+) NX:([^ ]+) NY:([^ ]+) NZ:([^ ]+) E:[^ ]+ F:([^ ]+) S_XYZ:([^ ])>>" );
 		Matcher matcher = splitterPattern.matcher(status);
 		if (matcher.find()) {
 			Double xpos = getCoord(matcher, 1);
