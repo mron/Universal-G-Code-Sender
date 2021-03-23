@@ -53,14 +53,18 @@ public class MarlinUtils {
 			ControllerStatus lastStatus, final String status,
 			final Capabilities version, Units reportingUnits) {
 			// final Pattern splitterPattern = Pattern.compile("^X\\:([^ ]+) Y\\:([^ ]+) Z\\:([^ ]+) E");
-			final Pattern splitterPattern = Pattern.compile("^<<X:([^ ]+) Y:([^ ]+) Z:([^ ]+) E:[^ ]+ F:([^ ]+) S_XYZ:([^ ])>>" );
+			//final Pattern splitterPattern = Pattern.compile("^<<X:([^ ]+) Y:([^ ]+) Z:([^ ]+) E:[^ ]+ F:([^ ]+) S_XYZ:([^ ])>>" );
+			final Pattern splitterPattern = Pattern.compile("^<<X:([^ ]+) Y:([^ ]+) Z:([^ ]+) NX:([^ ]+) NY:([^ ]+) NZ:([^ ]+) E:[^ ]+ F:([^ ]+) S_XYZ:([^ ])>>" );
 		Matcher matcher = splitterPattern.matcher(status);
 		if (matcher.find()) {
 			Double xpos = getCoord(matcher, 1);
 			Double ypos = getCoord(matcher, 2);
 			Double zpos = getCoord(matcher, 3);
-			Double fr = getCoord(matcher, 4); // Feedrate
-			Integer s = Integer.parseInt( matcher.group(5) ); //Status
+			Double nxpos = getCoord(matcher, 4);
+			Double nypos = getCoord(matcher, 5);
+			Double nzpos = getCoord(matcher, 6);
+			Double fr = getCoord(matcher, 7); // Feedrate
+			Integer s = Integer.parseInt( matcher.group(8) ); //Status
 			ControllerState cs = lastStatus.getState();
 			/*
 			  Here's what Marlin thinks
@@ -95,7 +99,8 @@ public class MarlinUtils {
 			}
 
 			Position pos = new Position(xpos, ypos, zpos, Units.MM);
-			return new ControllerStatus( cs, pos, pos, fr);
+			Position npos = new Position(nxpos, nypos, nzpos, Units.MM);
+			return new ControllerStatus( cs, pos, npos, fr);
 		}
 		return lastStatus;
 	}
@@ -136,15 +141,15 @@ public class MarlinUtils {
      */
     protected static Capabilities getMarlinStatusCapabilities() {
         Capabilities ret = new Capabilities();
-        // ret.addCapability(CapabilitiesConstants.JOGGING);
+        ret.addCapability(CapabilitiesConstants.JOGGING);
         // ret.addCapability(CapabilitiesConstants.CHECK_MODE);
         // ret.addCapability(CapabilitiesConstants.FIRMWARE_SETTINGS);
-        // ret.addCapability(CapabilitiesConstants.RETURN_TO_ZERO);
+        ret.addCapability(CapabilitiesConstants.RETURN_TO_ZERO);
         // ret.addCapability(CapabilitiesConstants.X_AXIS);
         // ret.addCapability(CapabilitiesConstants.Y_AXIS);
         // ret.addCapability(CapabilitiesConstants.Z_AXIS);
 
-		// ret.addCapability(CapabilitiesConstants.HOMING);
+		ret.addCapability(CapabilitiesConstants.HOMING);
 		// ret.addCapability(CapabilitiesConstants.HARD_LIMITS);
 
 		ret.addCapability(GrblCapabilitiesConstants.REAL_TIME);
