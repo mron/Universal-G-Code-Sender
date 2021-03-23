@@ -276,10 +276,10 @@ public class MarlinControllerTest {
 		instance.pauseStreaming();
 		assertEquals(1, mgc.numPauseSendCalls);
 		assertEquals(1, mgc.queuedStrings.size());
-		assertEquals("M0", mgc.queuedStrings.get(0));
+		assertEquals("!", mgc.queuedStrings.get(0));
 
 		assertFalse(instance.isPaused());
-		instance.rawResponseHandler("ok");
+		instance.rawResponseHandler(">>");
 		assertTrue(instance.isPaused());
 	}
 
@@ -293,12 +293,12 @@ public class MarlinControllerTest {
 		instance.openCommPort(getSettings().getConnectionDriver(), "blah", 1234);
 
 		assertFalse(instance.isPaused());
-		instance.sendCommandImmediately(instance.createCommand("M0"));
+		instance.sendCommandImmediately(instance.createCommand("!"));
 		assertEquals(1, mgc.queuedStrings.size());
-		assertEquals("M0", mgc.queuedStrings.get(0));
+		assertEquals("!", mgc.queuedStrings.get(0));
 
 		assertFalse(instance.isPaused());
-		instance.rawResponseHandler("echo:busy: paused for user");
+		instance.rawResponseHandler(">>");
 		assertTrue(instance.isPaused());
 	}
 
@@ -311,16 +311,16 @@ public class MarlinControllerTest {
 		MarlinController instance = new MarlinController(mgc);
 		instance.openCommPort(getSettings().getConnectionDriver(), "blah", 1234);
 
-		instance.rawResponseHandler("ok");
+		instance.rawResponseHandler(">>");
 		assertTrue(instance.isPaused());
 		instance.resumeStreaming();
 		assertEquals(2, mgc.numResumeSendCalls); // MarlinController calls it twice to cope with some corner cases
 
 		String sentstr = mgc.baos.toString();
-		assertEquals("M108\n", sentstr);
+		assertEquals("~", sentstr);
 
 		assertTrue(instance.isPaused());
-		instance.rawResponseHandler("ok");
+		instance.rawResponseHandler(">>");
 		assertFalse(instance.isPaused());
 	}
 }
