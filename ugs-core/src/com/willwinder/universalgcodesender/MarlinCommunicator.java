@@ -24,6 +24,8 @@ public class MarlinCommunicator extends BufferedCommunicator {
 		this.marlinBusy = marlinBusy;
 	}
 
+	protected GcodeCommand getNextCommand() {}
+
 	@Override
 	public boolean allowMoreCommands() {
 		// protect Marlin's buffers against overflow
