@@ -10,7 +10,7 @@ import com.willwinder.universalgcodesender.types.GcodeCommand;
 public class MarlinCommunicator extends BufferedCommunicator {
 
 	// TODO: this should be configurable via the UI rather than being a constant
-	private static final int MAX_MARLIN_ACTIVE_COMMANDS = 10;
+	private static final int MAX_MARLIN_ACTIVE_COMMANDS = 1;
 
 	private static final Logger logger = Logger.getLogger(MarlinCommunicator.class.getName());
 
@@ -26,7 +26,7 @@ public class MarlinCommunicator extends BufferedCommunicator {
 
 	protected GcodeCommand getNextCommand() {
 		GcodeCommand c = null ;
-		if ( !pausePending ){
+		if ( true || !pausePending ){
 			c = super.getNextCommand();
 			logger.info("----- nextCommand: " + c + "\n");
 		}
