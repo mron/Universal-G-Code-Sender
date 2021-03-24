@@ -52,19 +52,34 @@ public class MarlinUtils {
 	static protected ControllerStatus getStatusFromStatusString(
 			ControllerStatus lastStatus, final String status,
 			final Capabilities version, Units reportingUnits) {
-			// final Pattern splitterPattern = Pattern.compile("^X\\:([^ ]+) Y\\:([^ ]+) Z\\:([^ ]+) E");
-			//final Pattern splitterPattern = Pattern.compile("^<<X:([^ ]+) Y:([^ ]+) Z:([^ ]+) E:[^ ]+ F:([^ ]+) S_XYZ:([^ ])>>" );
-			final Pattern splitterPattern = Pattern.compile("^<<X:([^ ]+) Y:([^ ]+) Z:([^ ]+) NX:([^ ]+) NY:([^ ]+) NZ:([^ ]+) E:[^ ]+ F:([^ ]+) S_XYZ:([^ ])>>" );
+		Double xpos = 0.0;
+		Double ypos = 0.0;
+		Double zpos = 0.0;
+		Double wxpos = xpos;
+		Double wypos = ypos;
+		Double wzpos = zpos;
+		Double fr = 0.0; // Feedrate
+		Integer s = 0; //Status
+		// final Pattern splitterPattern = Pattern.compile("^X\\:([^ ]+) Y\\:([^ ]+) Z\\:([^ ]+) E");
+		//final Pattern splitterPattern = Pattern.compile("^<<X:([^ ]+) Y:([^ ]+) Z:([^ ]+) E:[^ ]+ F:([^ ]+) S_XYZ:([^ ])>>" );
+		//final Pattern splitterPattern = Pattern.compile("<<X:([^ ]+) Y:([^ ]+) Z:([^ ]+) NX:([^ ]+) NY:([^ ]+) NZ:([^ ]+) E:[^ ]+ F:([^ ]+) S_XYZ:([^ ])>>" );
+		final Pattern splitterPattern = Pattern.compile("([XYZ_SFN]+):([^ >]+)");
 		Matcher matcher = splitterPattern.matcher(status);
-		if (matcher.find()) {
-			Double xpos = getCoord(matcher, 1);
-			Double ypos = getCoord(matcher, 2);
-			Double zpos = getCoord(matcher, 3);
-			Double nxpos = getCoord(matcher, 4);
-			Double nypos = getCoord(matcher, 5);
-			Double nzpos = getCoord(matcher, 6);
-			Double fr = getCoord(matcher, 7); // Feedrate
-			Integer s = Integer.parseInt( matcher.group(8) ); //Status
+		boolean match_found = false;
+		while( matcher.find() ){
+			match_found = true;
+			String s1 = matcher.group(1);
+			String s2 = matcher.group(2);
+			if( matcher.group(1).matches("X") ) { xpos = getCoord(matcher, 2); wxpos = xpos; continue; }
+			if( matcher.group(1).matches("Y") ) { ypos = getCoord(matcher, 2); wypos = ypos; continue; }
+			if( matcher.group(1).matches("Z") ) { zpos = getCoord(matcher, 2); wzpos = zpos; continue; }
+			if( matcher.group(1).matches("WX") ) { wxpos = getCoord(matcher, 2); continue; }
+			if( matcher.group(1).matches("WY") ) { wypos = getCoord(matcher, 2); continue; }
+			if( matcher.group(1).matches("WZ") ) { wzpos = getCoord(matcher, 2); continue; }
+			if( matcher.group(1).matches("F") ) { fr = getCoord(matcher, 2); continue; }
+			if( matcher.group(1).matches("S_XYZ") ) { s = Integer.parseInt( matcher.group(2)); continue; }
+		}
+		if( match_found ){
 			ControllerState cs = lastStatus.getState();
 			/*
 			  Here's what Marlin thinks
@@ -99,7 +114,7 @@ public class MarlinUtils {
 			}
 
 			Position pos = new Position(xpos, ypos, zpos, Units.MM);
-			Position npos = new Position(nxpos, nypos, nzpos, Units.MM);
+			Position npos = new Position(wxpos, wypos, wzpos, Units.MM);
 			return new ControllerStatus( cs, pos, npos, fr);
 		}
 		return lastStatus;
