@@ -28,6 +28,7 @@ public class MarlinCommunicator extends BufferedCommunicator {
 	protected GcodeCommand getNextCommand() {
 		GcodeCommand c = super.getNextCommand();
 		this.dispatchConsoleMessage(MessageType.VERBOSE, "----- nextCommand: " + c + "\n");
+		logger.info("----- nextCommand: " + c + "\n");
 		return c;
 	}
 
