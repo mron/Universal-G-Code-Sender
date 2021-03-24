@@ -25,8 +25,11 @@ public class MarlinCommunicator extends BufferedCommunicator {
 	}
 
 	protected GcodeCommand getNextCommand() {
-		GcodeCommand c = super.getNextCommand();
-		logger.info("----- nextCommand: " + c + "\n");
+		GcodeCommand c = null ;
+		if ( !pausePending ){
+			c = super.getNextCommand();
+			logger.info("----- nextCommand: " + c + "\n");
+		}
 		return c;
 	}
 
