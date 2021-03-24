@@ -1,7 +1,6 @@
 package com.willwinder.universalgcodesender;
 
 import static com.willwinder.universalgcodesender.AbstractCommunicator.SerialCommunicatorEvent.COMMAND_SENT;
-import com.willwinder.universalgcodesender.listeners.MessageType;
 
 //import java.util.StringTokenizer;
 import java.util.logging.Logger;
@@ -27,7 +26,6 @@ public class MarlinCommunicator extends BufferedCommunicator {
 
 	protected GcodeCommand getNextCommand() {
 		GcodeCommand c = super.getNextCommand();
-		this.dispatchConsoleMessage(MessageType.VERBOSE, "----- nextCommand: " + c + "\n");
 		logger.info("----- nextCommand: " + c + "\n");
 		return c;
 	}
