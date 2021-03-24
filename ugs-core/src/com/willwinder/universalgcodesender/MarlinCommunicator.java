@@ -24,14 +24,13 @@ public class MarlinCommunicator extends BufferedCommunicator {
 		this.marlinBusy = marlinBusy;
 	}
 
-	protected GcodeCommand getNextCommand() {
-		GcodeCommand c = null ;
-		if ( true || !pausePending ){
-			c = super.getNextCommand();
-			logger.info("----- nextCommand: " + c + "\n");
-		}
-		return c;
-	}
+	// protected GcodeCommand getNextCommand() {
+	// 	GcodeCommand c = null ;
+
+	// 		c = super.getNextCommand();
+
+	// 	return c;
+	// }
 
 	@Override
 	public boolean allowMoreCommands() {

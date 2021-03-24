@@ -585,7 +585,6 @@ public class MarlinController extends AbstractController {
 				if ( this.capabilities.hasCapability(GrblCapabilitiesConstants.REAL_TIME)) {
 					logger.info("-----trying to '!'");
 					this.comm.sendByteImmediately(MarlinUtils.GRBL_PAUSE_COMMAND );
-					marlinComm.setPausePending();
 					//nonScriptedCommandsSent++;
 				} else {
 					logger.info("-----trying to send M0");
